@@ -6,184 +6,159 @@ require('date-utils');
 
 class Kyp extends Contract {
 
-  
+    async initLedger(ctx) {
+     
+    }
 
     /**
-     * Add new empty record for a caller
+     * Add new customer
      * @param {Context} ctx 
      */
-    async createPatientRecord(ctx){
-        // Client only
+    async createCustomer(ctx){
+        
         let cid = new ClientIdentity(ctx.stub);
-        if (!cid.assertAttributeValue("role", "client")) {
-            throw new Error('Only client can make a recored here');
+        if (!cid.assertAttributeValue("role", "customer")) {
+            throw new Error('Only customer');
         }
-        const record = {
+        const kyp = {
             access_list: [],
             allowed_list: [],
-            medical_info: [],
+            product_info: [],
         }
 
         const id = this.getCallerId(ctx);
 
-        await ctx.stub.putState(id, Buffer.from(JSON.stringify(record)));
+        await ctx.stub.putState(id, Buffer.from(JSON.stringify(kyp)));
 
         return true;
     }
 
     /**
-     * Add new empty record for a doctor
+     * Add new empty marketplace
      * @param {Context} ctx 
      */
-    async createDoctorRecord(ctx){
-        // Doctor only
+    async createMarketPlace(ctx){
+        
         let cid = new ClientIdentity(ctx.stub);
-        if (!cid.assertAttributeValue("role", "doctor")) {
-            throw new Error('Only doctor can make a recored here');
+        if (!cid.assertAttributeValue("role", "marketPlace")) {
+            throw new Error('Only marketplaces');
         }
 
-        const record = {
+        const kyp = {
             allowed_list: [],
         }
 
         const id = this.getCallerId(ctx);
 
-        await ctx.stub.putState(id, Buffer.from(JSON.stringify(record)));
+        await ctx.stub.putState(id, Buffer.from(JSON.stringify(kyp)));
 
         return true;
     }
 
     /**
-     * Add new medical information to a patient record
+     * Add new product information to a customer
      * @param {Context} ctx 
-     * @param {string} patientId 
+     * @param {string} productId 
      * @param {string} info 
      */
-    async writePatientRecord(ctx, patientId, info){
+    async verifyProduct(ctx, productId, info){
         const caller = this.getCallerId(ctx);
 
-        // Doctor only
         let cid = new ClientIdentity(ctx.stub);
-        if (!cid.assertAttributeValue("role", "doctor")) {
-            throw new Error('Only doctor can write recored');
+        if (!cid.assertAttributeValue("role", "marketPlace")) {
+            throw new Error('Only marketplace');
         }
 
-        // Get record
-        const recordAsByte = await ctx.stub.getState(patientId);
-        if (!recordAsByte || recordAsByte.length === 0) {
-            throw new Error(`${patientId} does not exist`);
+        
+        const productAsByte = await ctx.stub.getState(productId);
+        if (!productAsByte || productAsByte.length === 0) {
+            throw new Error(`${productId} does not exist`);
         }
-        const record = JSON.parse(recordAsByte.toString());
+        const kyp = JSON.parse(productAsByte.toString());
 
-        // Check permission
-        const permission = record.access_list.filter(access => {
+        
+        const permission = kyp.access_list.filter(access => {
             return access.id == caller;
         });
         if (!permission || permission.length === 0) {
-            throw new Error(`${caller} is not allowed to modify the record`);
+            throw new Error(`${caller} is not allowed to modify`);
         }
         
-        // Write record
+       
         var now = new Date();
-        const medical_info = {
+        const product_info = {
             date: now.toFormat("YYYY/MM/DD PP HH:MI"),
             writer_id: caller,
             information: info,
         }
-        record.medical_info.push(medical_info);
+        kyp.product_info.push(product_info);
 
-        await ctx.stub.putState(patientId, Buffer.from(JSON.stringify(record)));
+        await ctx.stub.putState(productId, Buffer.from(JSON.stringify(kyp)));
 
         return true;
     }
 
     /**
-     * Return caller's medical information
+     * Return 
      * @param {Context} ctx 
      */
-    async getMyMedicalInfo(ctx){
+    async getMyProductInfo(ctx){
         const caller = this.getCallerId(ctx);
 
-        // Get record
-        const recordAsByte = await ctx.stub.getState(caller);
-        if (!recordAsByte || recordAsByte.length === 0) {
+      
+        const productAsByte = await ctx.stub.getState(caller);
+        if (!productAsByte || productAsByte.length === 0) {
             throw new Error(`${caller} does not exist`);
         }
-        const record = JSON.parse(recordAsByte.toString());
+        const record = JSON.parse(productAsByte.toString());
 
-        return JSON.stringify(record.medical_info);
+        return JSON.stringify(record.product_info);
     }
 
-    async getMedicalInfoByPatientId(ctx, patientId){
+    async getProductInfobyId(ctx, productId){
         const caller = this.getCallerId(ctx);
 
-        // Get record
-        const recordAsByte = await ctx.stub.getState(patientId);
-        if (!recordAsByte || recordAsByte.length === 0) {
-            throw new Error(`${patientId} does not exist`);
+        
+        const productAsByte = await ctx.stub.getState(productId);
+        if (!productAsByte || productAsByte.length === 0) {
+            throw new Error(`${productId} does not exist`);
         }
-        const record = JSON.parse(recordAsByte.toString());
+        const kyp = JSON.parse(productAsByte.toString());
 
-        // Check permission
-        const permission = record.access_list.filter(access => {
+        
+        const permission = kyp.access_list.filter(access => {
             return access.id == caller;
         });
         if (!permission || permission.length === 0) {
-            throw new Error(`${caller} is not allowed to modify the record`);
+            throw new Error(`${caller} is not allowed to modify `);
         }
 
-        return JSON.stringify(record.medical_info);
+        return JSON.stringify(kyp.product_info);
     }
 
-    /**
-     * Return all doctor role users
-     * @param {Context} ctx 
-     */
-    async getDoctorList(ctx){
-        const caller = this.getCallerId(ctx);
-
-        // Client only
-        let cid = new ClientIdentity(ctx.stub);
-        if (!cid.assertAttributeValue("role", "client")) {
-            throw new Error('Only patient can get the doctor list');
-        }
-
-        // Get record
-        const recordAsByte = await ctx.stub.getState(caller);
-        if (!recordAsByte || recordAsByte.length === 0) {
-            throw new Error(`${caller} does not exist`);
-        }
-        const record = JSON.parse(recordAsByte.toString());
-
-        // Filter doctors
-        const doctors = record.access_list.filter(access => {
-            return access.role == 'doctor';
-        });
-
-        return JSON.stringify(doctors);
-    }
+  
 
     /**
-     * Return all permission users
+     * Return all permissioned users
      * @param {Context} ctx 
      */
     async getAccessList(ctx){
         const caller = this.getCallerId(ctx);
 
-        // Client only
+        
         let cid = new ClientIdentity(ctx.stub);
-        if (!cid.assertAttributeValue("role", "client")) {
-            throw new Error('Only patient can get the access list');
+        if (!cid.assertAttributeValue("role", "marketPlace")) {
+            throw new Error('Only marketplace can get the access list');
         }
 
-        // Get record
-        const recordAsByte = await ctx.stub.getState(caller);
-        if (!recordAsByte || recordAsByte.length === 0) {
+       
+        const productAsByte = await ctx.stub.getState(caller);
+        if (!productAsByte || productAsByte.length === 0) {
             throw new Error(`${caller} does not exist`);
         }
-        const record = JSON.parse(recordAsByte.toString());
+        const kyp = JSON.parse(productAsByte.toString());
 
-        return JSON.stringify(record.access_list);
+        return JSON.stringify(kyp.access_list);
     }
 
     /**
@@ -194,40 +169,16 @@ class Kyp extends Contract {
         const caller = this.getCallerId(ctx);
 
         // Get record
-        const recordAsByte = await ctx.stub.getState(caller);
-        if (!recordAsByte || recordAsByte.length === 0) {
+        const productAsByte = await ctx.stub.getState(caller);
+        if (!productAsByte || productAsByte.length === 0) {
             throw new Error(`${caller} does not exist`);
         }
-        const record = JSON.parse(recordAsByte.toString());
+        const record = JSON.parse(productAsByte.toString());
 
         return JSON.stringify(record.allowed_list);
     }
 
-    /**
-     * Check if I’m allowed by patientID
-     * @param {Context} ctx 
-     * @param {string} patientId target patient id
-     */
-    async checkMyPermissionStatus(ctx, patientId){
-        const caller = this.getCallerId(ctx);
-
-        // Get record
-        const recordAsByte = await ctx.stub.getState(patientId);
-        if (!recordAsByte || recordAsByte.length === 0) {
-            throw new Error(`${patientId} does not exist`);
-        }
-        const record = JSON.parse(recordAsByte.toString());
-
-        // Check permission
-        const permission = record.access_list.filter(access => {
-            return access.id == caller;
-        });
-        if (!permission || permission.length === 0) {
-            return false
-        }
-
-        return true;
-    }
+    
 
     /**
      * Add a user to access_list and allowed_list
@@ -239,87 +190,53 @@ class Kyp extends Contract {
         const caller = this.getCallerId(ctx);
         const callerRole = this.getCallerRole(ctx);
 
-        // Get record
-        const recordAsByte = await ctx.stub.getState(caller);
-        if (!recordAsByte || recordAsByte.length === 0) {
+        
+        const productAsByte = await ctx.stub.getState(caller);
+        if (!productAsByte || productAsByte.length === 0) {
             throw new Error(`${caller} does not exist`);
         }
-        const record = JSON.parse(recordAsByte.toString());
+        const kyp = JSON.parse(productAsByte.toString());
 
-        const recordAllowedAsByte = await ctx.stub.getState(id);
-        if (!recordAllowedAsByte || recordAllowedAsByte.length === 0) {
+        const productAllowedAsByte = await ctx.stub.getState(id);
+        if (!productAllowedAsByte || productAllowedAsByte.length === 0) {
             throw new Error(`${id} does not exist`);
         }
-        const recordAllowed = JSON.parse(recordAllowedAsByte.toString());
+        const productAllowed = JSON.parse(productAllowedAsByte.toString());
 
         // Add permission
-        const permission = record.access_list.filter(access => {
+        const permission = kyp.access_list.filter(access => {
             return access.id == id;
         });
         if (!permission || permission.length === 0) {
-            record.access_list.push({
+            kyp.access_list.push({
                 id: id,
                 role: role,
             });
         }
 
-        const allowed = recordAllowed.allowed_list.filter(allowed => {
+        const allowed = productAllowed.allowed_list.filter(allowed => {
             return allowed.id == caller;
         });
         if (!allowed || allowed.length === 0) {
-            recordAllowed.allowed_list.push({
+            productAllowed.allowed_list.push({
                 id: caller,
                 role: callerRole,
             });
         }
 
-        await ctx.stub.putState(caller, Buffer.from(JSON.stringify(record)));
-        await ctx.stub.putState(id, Buffer.from(JSON.stringify(recordAllowed)));
+        await ctx.stub.putState(caller, Buffer.from(JSON.stringify(kyp)));
+        await ctx.stub.putState(id, Buffer.from(JSON.stringify(productAllowed)));
 
         return true;
     }
 
-    /**
-     * Delete a user from access_list and allowed_list
-     * @param {Context} ctx 
-     * @param {string} id target user id
-     */
-    async deletePermission(ctx, id){
-        const caller = this.getCallerId(ctx);
-        // Get record
-        const recordAsByte = await ctx.stub.getState(caller);
-        if (!recordAsByte || recordAsByte.length === 0) {
-            throw new Error(`${caller} does not exist`);
-        }
-        const record = JSON.parse(recordAsByte.toString());
-
-        const recordAllowedAsByte = await ctx.stub.getState(id);
-        if (!recordAllowedAsByte || recordAllowedAsByte.length === 0) {
-            throw new Error(`${id} does not exist`);
-        }
-        const recordAllowed = JSON.parse(recordAllowedAsByte.toString());
-
-        // Delete permission
-        const permission = record.access_list.filter(access => {
-            return access.id != id;
-        });
-        record.access_list = permission;
-
-        const allowed = recordAllowed.allowed_list.filter(allowed => {
-            return allowed.id != caller;
-        });
-        recordAllowed.allowed_list = allowed;
-
-        await ctx.stub.putState(caller, Buffer.from(JSON.stringify(record)));
-        await ctx.stub.putState(id, Buffer.from(JSON.stringify(recordAllowed)));
-
-        return true;
-    }
+ 
+  
 
 
     getCallerId(ctx) {
         let cid = new ClientIdentity(ctx.stub);
-        const idString = cid.getID();// "x509::{subject DN}::{issuer DN}"
+        const idString = cid.getID();
         const idParams = idString.toString().split('::');
         return idParams[1].split('CN=')[1];
 
