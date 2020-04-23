@@ -4,7 +4,7 @@
 
 'use strict';
 
-const Record = require('./lib/record');
+const Kyp = require('./lib/kyp');
 
-module.exports.Record = Record;
-module.exports.contracts = [ Record ];
+module.exports.Kyp = Kyp;
+module.exports.contracts = [ Kyp ];

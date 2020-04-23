@@ -4,7 +4,7 @@ const { Contract } = require('fabric-contract-api');
 const ClientIdentity = require('fabric-shim').ClientIdentity;
 require('date-utils');
 
-class Record extends Contract {
+class Kyp extends Contract {
 
     async initLedger(ctx) {
         // console.info('============= START : Initialize Ledger ===========');
@@ -418,4 +418,4 @@ class Record extends Contract {
     }
 }
 
-module.exports = Record;
+module.exports = Kyp;
