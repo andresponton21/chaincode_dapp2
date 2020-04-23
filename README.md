@@ -36,7 +36,7 @@ cd fabric-samples/fabcar
 ## chaincode
 ```
 cd fablic-first/chaincode
-git clone https://github.com/furuta/GBC_DAPP1_chaincode.git
+git clone https://github.com/andresponton21/chaincode_dapp2.git
 ```
 Enter into a docker instance
 ```
@@ -45,7 +45,7 @@ docker exec -it cli bash
 
 * New(first time)
 ```
-peer chaincode install -l node -n record -v 0.1.1 -p /opt/gopath/src/github.com/chaincode/GBC_DAPP1_chaincode/record/javascript/
+peer chaincode install -l node -n kyp -v 0.1.1 -p /opt/gopath/src/github.com/chaincode/chaincode_dapp2/kyp/javascript/
 peer chaincode instantiate -o orderer.example.com:7050 --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n record -v 0.1.1 -l node -c '{"Args":["initLedger"]}' -P "OR ('Org1MSP.member','Org2MSP.member')"
 ```
 
@@ -53,19 +53,11 @@ peer chaincode instantiate -o orderer.example.com:7050 --tls true --cafile /opt/
 
 Please count up version number
 ```
-peer chaincode install -l node -n record -v 0.1.2 -p /opt/gopath/src/github.com/chaincode/GBC_DAPP1_chaincode/record/javascript/
-peer chaincode upgrade -n record -v 0.1.2 --tls true -C mychannel -o orderer.example.com:7050 -c '{"Args":["initLedger"]}' --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -P "OR ('Org1MSP.member','Org2MSP.member')"
+peer chaincode install -l node -n kyp -v 0.1.2 -p /opt/gopath/src/github.com/chaincode/chaincode_dapp2/kyp/javascript/
+peer chaincode upgrade -n kyp -v 0.1.2 --tls true -C mychannel -o orderer.example.com:7050 -c '{"Args":["initLedger"]}' --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -P "OR ('Org1MSP.member','Org2MSP.member')"
 ```
 Exit from the docker instance
 ```
-exit
-```
 
-## API
-```
-git clone https://github.com/leodinh/health-record-Back-End
-cd health-record-End
-npm install
-node enrollAdmin.js
-npm start
-```
+
+
